@@ -192,7 +192,7 @@ app.post("/api/admin/create-key", admin, (req, res) => {
   });
 });
 
-app.post("/api/admin/revoke", admin, (req, res) => {
+// Generates a fresh key for a selected farm without requiring Linkvertise first.\n// This is protected by the admin token and is intended for manual/admin use.\napp.post("/api/admin/generate-key", admin, (req, res) => {\n  const userId = clean(req.body?.userId);\n  const farmId = clean(req.body?.farmId);\n  const hours = Math.min(Math.max(Number(req.body?.hours || 24), 1), 8760);\n\n  if (!farmId) {\n    return res.status(400).json({ success: false, message: "Missing farmId." });\n  }\n\n  const key = generateKey();\n  const now = Date.now();\n  const expires = now + hours * 3600000;\n\n  db.prepare(\n    "INSERT INTO keys(key_hash,user_id,farm_id,created_at,expires_at,linkvertise_verified) VALUES(?,?,?,?,?,1)"\n  ).run(hashKey(key), userId || null, farmId, now, expires);\n\n  res.json({\n    success: true,\n    key,\n    farmId,\n    expiresAt: new Date(expires).toISOString()\n  });\n});\n\napp.post("/api/admin/revoke", admin, (req, res) => {
   const key = clean(req.body?.key);
   if (!key) return res.status(400).json({ success: false, message: "Missing key." });
 
