@@ -39,6 +39,16 @@ const generateKey = () => {
   return "SV-" + r.slice(0, 4) + "-" + r.slice(4, 8) + "-" + r.slice(8, 12);
 };
 const clean = value => typeof value === "string" ? value.trim() : "";
+
+function getFarmLinks() {
+  try {
+    const parsed = JSON.parse(process.env.FARM_LINKS_JSON || "{}");
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
 const admin = (req, res, next) => {
   if (!process.env.ADMIN_TOKEN || req.get("x-admin-token") !== process.env.ADMIN_TOKEN) {
     return res.status(401).json({ success: false, message: "Unauthorized." });
@@ -48,6 +58,25 @@ const admin = (req, res, next) => {
 
 app.get("/health", (req, res) => {
   res.json({ success: true, service: "scriptvault-key-backend" });
+});
+
+// Returns the Linkvertise Target-Link configured for a farm.
+// Link creation itself is done in the Linkvertise publisher dashboard.
+app.get("/api/farms/:farmId/link", (req, res) => {
+  const farmId = clean(req.params.farmId);
+  const link = getFarmLinks()[farmId];
+
+  if (!farmId || !link) {
+    return res.status(404).json({ success: false, message: "Farm Linkvertise link not configured." });
+  }
+
+  try {
+    new URL(link);
+  } catch {
+    return res.status(500).json({ success: false, message: "Configured farm link is invalid." });
+  }
+
+  res.json({ success: true, farmId, link });
 });
 
 app.post("/api/unlock", async (req, res) => {
