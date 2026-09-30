@@ -1,7 +1,6 @@
 -- =====================================================
 -- ScriptVault UI Library v3.0.0
--- Professional Roblox UI Library — Complete Edition
--- 3000+ lines · Full API · Theme Switcher · Config System
+-- Professional Roblox UI Library - Complete Edition
 -- GitHub: github.com/BursaliAlperen/ScriptVault-AutoFarm
 -- Usage: local SV = loadstring(game:HttpGet("RAW_URL"))()
 -- =====================================================
@@ -21,12 +20,11 @@ local ContentProvider  = game:GetService("ContentProvider")
 local RunService       = game:GetService("RunService")
 local HttpService      = game:GetService("HttpService")
 local Stats            = game:GetService("Stats")
-local GuiService       = game:GetService("GuiService")
 local Workspace        = game:GetService("Workspace")
 local LP               = Players.LocalPlayer
 
 -- =====================================================
--- DEFAULT CUSTOM ICONS
+-- DEFAULT CUSTOM ICONS (your assets)
 -- =====================================================
 SV.Icons = {
     Logo        = "rbxassetid://111637853140695",
@@ -56,11 +54,11 @@ SV.Icons = {
 -- =====================================================
 local Themes = {}
 
-local function BaseTheme(name, colors)
+local function RegisterTheme(name, colors)
     Themes[name] = colors
 end
 
-BaseTheme("DarkBlue", {
+RegisterTheme("DarkBlue", {
     Background        = Color3.fromRGB(15, 16, 24),
     Sidebar           = Color3.fromRGB(20, 21, 32),
     TopBar            = Color3.fromRGB(22, 23, 35),
@@ -92,7 +90,7 @@ BaseTheme("DarkBlue", {
     Overlay           = Color3.fromRGB(0, 0, 0),
 })
 
-BaseTheme("Midnight", {
+RegisterTheme("Midnight", {
     Background        = Color3.fromRGB(10, 10, 15),
     Sidebar           = Color3.fromRGB(15, 15, 22),
     TopBar            = Color3.fromRGB(15, 15, 22),
@@ -124,7 +122,7 @@ BaseTheme("Midnight", {
     Overlay           = Color3.fromRGB(0, 0, 0),
 })
 
-BaseTheme("Ocean", {
+RegisterTheme("Ocean", {
     Background        = Color3.fromRGB(12, 20, 28),
     Sidebar           = Color3.fromRGB(16, 26, 36),
     TopBar            = Color3.fromRGB(18, 28, 40),
@@ -156,7 +154,7 @@ BaseTheme("Ocean", {
     Overlay           = Color3.fromRGB(0, 0, 0),
 })
 
-BaseTheme("Monochrome", {
+RegisterTheme("Monochrome", {
     Background        = Color3.fromRGB(18, 18, 18),
     Sidebar           = Color3.fromRGB(24, 24, 24),
     TopBar            = Color3.fromRGB(24, 24, 24),
@@ -188,7 +186,7 @@ BaseTheme("Monochrome", {
     Overlay           = Color3.fromRGB(0, 0, 0),
 })
 
-BaseTheme("Light", {
+RegisterTheme("Light", {
     Background        = Color3.fromRGB(245, 247, 250),
     Sidebar           = Color3.fromRGB(238, 241, 246),
     TopBar            = Color3.fromRGB(238, 241, 246),
@@ -220,7 +218,7 @@ BaseTheme("Light", {
     Overlay           = Color3.fromRGB(0, 0, 0),
 })
 
-BaseTheme("Sunset", {
+RegisterTheme("Sunset", {
     Background        = Color3.fromRGB(24, 15, 20),
     Sidebar           = Color3.fromRGB(32, 20, 28),
     TopBar            = Color3.fromRGB(36, 22, 32),
@@ -252,7 +250,7 @@ BaseTheme("Sunset", {
     Overlay           = Color3.fromRGB(0, 0, 0),
 })
 
-BaseTheme("Forest", {
+RegisterTheme("Forest", {
     Background        = Color3.fromRGB(14, 22, 16),
     Sidebar           = Color3.fromRGB(20, 30, 22),
     TopBar            = Color3.fromRGB(22, 32, 24),
@@ -312,9 +310,7 @@ end
 
 local function Safe(fn, ...)
     local ok, err = pcall(fn, ...)
-    if not ok then
-        warn("[SV] Error: " .. tostring(err))
-    end
+    if not ok then warn("[SV] " .. tostring(err)) end
     return ok
 end
 
@@ -349,10 +345,6 @@ local function RoundTo(n, decimals)
     return math.floor(n * mult + 0.5) / mult
 end
 
-local function GetFPS()
-    return math.floor(1 / math.max(RunService.RenderStepped:Wait(), 0.0001))
-end
-
 local function GetPing()
     local ok, ping = pcall(function()
         return math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
@@ -371,34 +363,12 @@ local function IsTouchDevice()
     return UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 end
 
-local function GetScreenSize()
-    local viewport = Workspace.CurrentCamera.ViewportSize
-    return viewport.X, viewport.Y
-end
-
--- String utilities
-local function Trim(s)
-    return (s:gsub("^%s*(.-)%s*$", "%1"))
-end
-
 local function StartsWith(s, prefix)
     return s:sub(1, #prefix) == prefix
 end
 
-local function EndsWith(s, suffix)
-    return s:sub(-#suffix) == suffix
-end
-
-local function Split(s, sep)
-    local result = {}
-    for match in (s .. sep):gmatch("(.-)" .. sep) do
-        table.insert(result, match)
-    end
-    return result
-end
-
 -- =====================================================
--- ICON LOADER with preload + cache
+-- ICON LOADER
 -- =====================================================
 local IconCache = {}
 local IconLoading = {}
@@ -447,11 +417,11 @@ local function LoadIcon(id, size, color, parent)
 end
 
 -- =====================================================
--- SV LOGO DRAWER (Circular with custom asset)
+-- SV LOGO DRAWER
 -- =====================================================
 local function DrawSVLogo(parent, size, colors)
     size = size or 60
-    colors = colors or { primary = Color3.fromRGB(0, 120, 255), accent = Color3.fromRGB(139, 92, 246) }
+    colors = colors or { primary = Color3.fromRGB(0, 120, 255) }
 
     local wrap = Create("Frame", {
         Parent = parent,
@@ -478,7 +448,8 @@ local function DrawSVLogo(parent, size, colors)
         Rotation = 45,
     })
 
-    local logoImg = LoadIcon(SV.Icons.Logo, UDim2.new(0.85, 0, 0.85, 0), Color3.fromRGB(255, 255, 255), ring)
+    -- Custom logo asset
+    local logoImg = LoadIcon(SV.Icons.Logo, UDim2.new(0.88, 0, 0.88, 0), Color3.fromRGB(255, 255, 255), ring)
     if logoImg then
         logoImg.Position = UDim2.new(0.5, 0, 0.5, 0)
         logoImg.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -504,7 +475,6 @@ function DialogManager.new(screenGui, colors)
     local self = setmetatable({}, DialogManager)
     self.screenGui = screenGui
     self.colors = colors
-    self.active = {}
     return self
 end
 
@@ -532,7 +502,6 @@ function DialogManager:Show(opts)
     Create("UICorner", { Parent = box, CornerRadius = UDim.new(0, 14) })
     Create("UIStroke", { Parent = box, Color = C.Border, Thickness = 1.5 })
 
-    -- Title
     Create("TextLabel", {
         Parent = box,
         BackgroundTransparency = 1,
@@ -546,7 +515,6 @@ function DialogManager:Show(opts)
         ZIndex = 5002,
     })
 
-    -- Content
     local contentLbl = Create("TextLabel", {
         Parent = box,
         BackgroundTransparency = 1,
@@ -566,7 +534,6 @@ function DialogManager:Show(opts)
     local bounds = contentLbl.TextBounds
     contentLbl.Size = UDim2.new(1, -32, 0, bounds.Y)
 
-    -- Input (optional)
     local inputBox
     local inputOffset = 0
     if opts.InputPlaceholder then
@@ -591,7 +558,6 @@ function DialogManager:Show(opts)
         inputOffset = 46
     end
 
-    -- Buttons
     local btnY = 54 + bounds.Y + 12 + inputOffset + 12
     local btnRow = Create("Frame", {
         Parent = box,
@@ -661,7 +627,6 @@ function DialogManager:Show(opts)
         addButton("Confirm", "Primary", opts.OnConfirm)
     end
 
-    -- Animate in
     Tween(overlay, { BackgroundTransparency = 0.55 }, 0.2)
     local finalHeight = btnY + 56
     Tween(box, { Size = UDim2.new(0, 420, 0, finalHeight), Position = UDim2.new(0.5, -210, 0.5, -finalHeight / 2) }, 0.3, Enum.EasingStyle.Back)
@@ -679,8 +644,10 @@ local function AttachTooltip(target, text, colors)
     target.MouseEnter:Connect(function()
         if not target.Parent then return end
         local mouse = UserInputService:GetMouseLocation()
+        local parentGui = target:FindFirstAncestorWhichIsA("ScreenGui") or LP:FindFirstChild("PlayerGui")
+        if not parentGui then return end
         tooltip = Create("Frame", {
-            Parent = target:FindFirstAncestorWhichIsA("ScreenGui") or LP.PlayerGui,
+            Parent = parentGui,
             Size = UDim2.new(0, 0, 0, 26),
             Position = UDim2.new(0, mouse.X + 12, 0, mouse.Y + 12),
             BackgroundColor3 = C.Background,
@@ -726,9 +693,11 @@ local function AttachContextMenu(target, options, colors)
     target.MouseButton2Click:Connect(function()
         if menu then menu:Destroy() end
         local mouse = UserInputService:GetMouseLocation()
+        local parentGui = target:FindFirstAncestorWhichIsA("ScreenGui") or LP:FindFirstChild("PlayerGui")
+        if not parentGui then return end
 
         menu = Create("Frame", {
-            Parent = target:FindFirstAncestorWhichIsA("ScreenGui") or LP.PlayerGui,
+            Parent = parentGui,
             Size = UDim2.new(0, 160, 0, #options * 30 + 8),
             Position = UDim2.new(0, mouse.X, 0, mouse.Y),
             BackgroundColor3 = C.Background,
@@ -770,7 +739,6 @@ local function AttachContextMenu(target, options, colors)
             end)
         end
 
-        -- Auto close on outside click
         task.spawn(function()
             local conn
             conn = UserInputService.InputBegan:Connect(function(input)
@@ -829,7 +797,6 @@ function NotifySystem:Push(opts)
     elseif nType == "Warning" then typeColor = C.Warning
     elseif nType == "Error" then typeColor = C.Error end
 
-    -- Limit active notifications
     local limit = self.options.Limit or 5
     while #self.active >= limit do
         local oldest = table.remove(self.active, 1)
@@ -854,7 +821,6 @@ function NotifySystem:Push(opts)
         BorderSizePixel = 0,
     })
 
-    -- Icon circle
     local iconCircle = Create("Frame", {
         Parent = n,
         Size = UDim2.new(0, 30, 0, 30),
@@ -871,14 +837,14 @@ function NotifySystem:Push(opts)
             img.AnchorPoint = Vector2.new(0.5, 0.5)
         end
     else
-        local icons = { Info = "i", Success = "✓", Warning = "!", Error = "✕" }
+        local icons = { Info = "i", Success = "OK", Warning = "!", Error = "X" }
         Create("TextLabel", {
             Parent = iconCircle,
             BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 1, 0),
             Text = icons[nType] or "i",
             TextColor3 = Color3.fromRGB(255, 255, 255),
-            TextSize = 14,
+            TextSize = 12,
             Font = Enum.Font.GothamBold,
         })
     end
@@ -1018,7 +984,6 @@ function SV:CreateWindow(options)
     })
     local logo = DrawSVLogo(LoadLogoWrap, 110, { primary = Colors.Accent })
 
-    -- Logo pulse
     task.spawn(function()
         while logo and logo.Parent do
             Tween(logo, { Size = UDim2.new(0, 100, 0, 100) }, 0.7, Enum.EasingStyle.Sine)
@@ -1029,7 +994,6 @@ function SV:CreateWindow(options)
         end
     end)
 
-    -- Rotating ring
     task.spawn(function()
         local rot = 0
         while GlowRing.Parent do
@@ -1142,7 +1106,6 @@ function SV:CreateWindow(options)
         BorderSizePixel = 0,
     })
 
-    -- Top logo
     local TopLogoHolder = Create("Frame", {
         Parent = TopBar,
         BackgroundTransparency = 1,
@@ -1151,7 +1114,7 @@ function SV:CreateWindow(options)
     })
     LoadIcon(AccentIcon, UDim2.new(1, 0, 1, 0), Color3.fromRGB(255, 255, 255), TopLogoHolder)
 
-    local TitleLabel = Create("TextLabel", {
+    Create("TextLabel", {
         Parent = TopBar,
         BackgroundTransparency = 1,
         Size = UDim2.new(1, -350, 1, 0),
@@ -1175,9 +1138,7 @@ function SV:CreateWindow(options)
     local SearchStroke = Create("UIStroke", { Parent = SearchWrap, Color = Colors.Separator, Thickness = 1 })
 
     local searchIcon = LoadIcon(SV.Icons.Info, UDim2.new(0, 16, 0, 16), Colors.TextMuted, SearchWrap)
-    if searchIcon then
-        searchIcon.Position = UDim2.new(0, 8, 0.5, -8)
-    end
+    if searchIcon then searchIcon.Position = UDim2.new(0, 8, 0.5, -8) end
 
     local SearchBox = Create("TextBox", {
         Parent = SearchWrap,
@@ -1201,7 +1162,6 @@ function SV:CreateWindow(options)
         Tween(SearchStroke, { Color = Colors.Separator }, 0.15)
     end)
 
-    -- Minimize button
     local MinBtn = Create("TextButton", {
         Parent = TopBar,
         Size = UDim2.new(0, 30, 0, 28),
@@ -1220,7 +1180,6 @@ function SV:CreateWindow(options)
         BorderSizePixel = 0,
     })
 
-    -- Close button
     local CloseBtn = Create("TextButton", {
         Parent = TopBar,
         Size = UDim2.new(0, 30, 0, 28),
@@ -1242,18 +1201,10 @@ function SV:CreateWindow(options)
         })
     end
 
-    MinBtn.MouseEnter:Connect(function()
-        Tween(MinBtn, { BackgroundColor3 = Color3.fromRGB(245, 175, 20) }, 0.1)
-    end)
-    MinBtn.MouseLeave:Connect(function()
-        Tween(MinBtn, { BackgroundColor3 = Colors.Warning }, 0.1)
-    end)
-    CloseBtn.MouseEnter:Connect(function()
-        Tween(CloseBtn, { BackgroundColor3 = Color3.fromRGB(245, 80, 80) }, 0.1)
-    end)
-    CloseBtn.MouseLeave:Connect(function()
-        Tween(CloseBtn, { BackgroundColor3 = Colors.Error }, 0.1)
-    end)
+    MinBtn.MouseEnter:Connect(function() Tween(MinBtn, { BackgroundColor3 = Color3.fromRGB(245, 175, 20) }, 0.1) end)
+    MinBtn.MouseLeave:Connect(function() Tween(MinBtn, { BackgroundColor3 = Colors.Warning }, 0.1) end)
+    CloseBtn.MouseEnter:Connect(function() Tween(CloseBtn, { BackgroundColor3 = Color3.fromRGB(245, 80, 80) }, 0.1) end)
+    CloseBtn.MouseLeave:Connect(function() Tween(CloseBtn, { BackgroundColor3 = Colors.Error }, 0.1) end)
 
     -- ==========================================
     -- SIDEBAR
@@ -1336,7 +1287,7 @@ function SV:CreateWindow(options)
         Position = UDim2.new(0, SidebarWidth, 0, 46),
         BackgroundColor3 = Colors.Background,
         BorderSizePixel = 0,
-        ClipsDescendants = true,
+        ClipsDescendants = false,
     })
     Create("UICorner", { CornerRadius = UDim.new(0, 0, 14, 0) }, ContentArea)
 
@@ -1346,7 +1297,7 @@ function SV:CreateWindow(options)
     local Notify = NotifySystem.new(ScreenGui, Colors, { Limit = 5 })
 
     -- ==========================================
-    -- DIALOG MANAGER
+    -- DIALOG
     -- ==========================================
     local Dialog = DialogManager.new(ScreenGui, Colors)
 
@@ -1459,7 +1410,6 @@ function SV:CreateWindow(options)
             ZIndex = 10,
         })
 
-        -- Visual corner grip
         for i = 1, 3 do
             local dot = Create("Frame", {
                 Parent = ResizeHandle,
@@ -1517,7 +1467,6 @@ function SV:CreateWindow(options)
     })
     Create("UICorner", { CornerRadius = UDim.new(1, 0) }, MinIcon)
     Create("UIStroke", { Parent = MinIcon, Color = Colors.AccentHover, Thickness = 2 })
-
     local minIconImg = LoadIcon(AccentIcon, UDim2.new(0.75, 0, 0.75, 0), Color3.fromRGB(255, 255, 255), MinIcon)
     if minIconImg then
         minIconImg.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -1567,7 +1516,6 @@ function SV:CreateWindow(options)
 
     CloseBtn.MouseButton1Click:Connect(CloseWindow)
 
-    -- Keybind toggle
     UserInputService.InputBegan:Connect(function(input, processed)
         if processed then return end
         if input.KeyCode == ToggleKeybind then
@@ -1625,7 +1573,6 @@ function SV:CreateWindow(options)
             TextXAlignment = Enum.TextXAlignment.Left,
         })
 
-        -- Badge
         local Badge
         if tabOptions.Badge then
             Badge = Create("Frame", {
@@ -1647,7 +1594,6 @@ function SV:CreateWindow(options)
             })
         end
 
-        -- Content
         local Content = Create("ScrollingFrame", {
             Parent = ContentArea,
             Size = UDim2.new(1, 0, 1, 0),
@@ -1659,6 +1605,7 @@ function SV:CreateWindow(options)
             ScrollBarThickness = 4,
             ScrollBarImageColor3 = Colors.Accent,
             BorderSizePixel = 0,
+            ClipsDescendants = false,
         })
         Create("UIListLayout", {
             Parent = Content,
@@ -1896,12 +1843,8 @@ function SV:CreateWindow(options)
             end
 
             btn.MouseButton1Click:Connect(function() setValue(not value) end)
-            c.MouseEnter:Connect(function()
-                Tween(c, { BackgroundColor3 = Colors.ElementHover }, 0.12)
-            end)
-            c.MouseLeave:Connect(function()
-                Tween(c, { BackgroundColor3 = Colors.Element }, 0.12)
-            end)
+            c.MouseEnter:Connect(function() Tween(c, { BackgroundColor3 = Colors.ElementHover }, 0.12) end)
+            c.MouseLeave:Connect(function() Tween(c, { BackgroundColor3 = Colors.Element }, 0.12) end)
 
             if opts.Tooltip then AttachTooltip(c, opts.Tooltip, Colors) end
 
@@ -1940,16 +1883,10 @@ function SV:CreateWindow(options)
             Create("UICorner", { Parent = btn, CornerRadius = UDim.new(0, 8) })
 
             btn.MouseEnter:Connect(function()
-                Tween(btn, {
-                    BackgroundColor3 = vc.hover,
-                    Size = UDim2.new(1, 2, 0, 42),
-                }, 0.12)
+                Tween(btn, { BackgroundColor3 = vc.hover, Size = UDim2.new(1, 2, 0, 42) }, 0.12)
             end)
             btn.MouseLeave:Connect(function()
-                Tween(btn, {
-                    BackgroundColor3 = vc.base,
-                    Size = UDim2.new(1, 0, 0, 42),
-                }, 0.12)
+                Tween(btn, { BackgroundColor3 = vc.base, Size = UDim2.new(1, 0, 0, 42) }, 0.12)
             end)
             btn.MouseButton1Click:Connect(function()
                 if opts.Callback then Safe(opts.Callback) end
@@ -2099,6 +2036,7 @@ function SV:CreateWindow(options)
                 BackgroundColor3 = Colors.Element,
                 BorderSizePixel = 0,
                 LayoutOrder = NextOrder(),
+                ClipsDescendants = false,
             })
             Create("UICorner", { Parent = c, CornerRadius = UDim.new(0, 8) })
 
@@ -2160,26 +2098,26 @@ function SV:CreateWindow(options)
                 Size = UDim2.new(0, 20, 1, 0),
                 Position = UDim2.new(1, -24, 0, 0),
                 BackgroundTransparency = 1,
-                Text = "▼",
+                Text = "v",
                 TextColor3 = Colors.TextMuted,
-                TextSize = 11,
+                TextSize = 12,
                 Font = Enum.Font.GothamBold,
             })
 
             local listFrame = Create("ScrollingFrame", {
-                Parent = c,
-                Size = UDim2.new(1, -28, 0, 0),
-                Position = UDim2.new(0, 14, 0, 62),
+                Parent = Window,
+                Size = UDim2.new(0, 200, 0, 0),
                 BackgroundColor3 = Colors.Dropdown,
                 BorderSizePixel = 0,
                 Visible = false,
-                ZIndex = 20,
+                ZIndex = 30000,
                 ScrollBarThickness = 3,
-                ScrollBarImageColor3 = Colors.Accent,
                 CanvasSize = UDim2.new(0, 0, 0, 0),
                 AutomaticCanvasSize = Enum.AutomaticSize.Y,
+                ClipsDescendants = false,
             })
             Create("UICorner", { Parent = listFrame, CornerRadius = UDim.new(0, 6) })
+            Create("UIStroke", { Parent = listFrame, Color = Colors.Border, Thickness = 1, Transparency = 0.4 })
             Create("UIListLayout", { Parent = listFrame, Padding = UDim.new(0, 2) })
             Create("UIPadding", {
                 Parent = listFrame,
@@ -2194,14 +2132,15 @@ function SV:CreateWindow(options)
             local function toggleList()
                 isOpen = not isOpen
                 if isOpen then
+                    listFrame.Size = UDim2.new(0, selectBtn.AbsoluteSize.X, 0, math.min(#options * 32 + 8, 220))
+                    listFrame.Position = UDim2.new(
+                        0,
+                        selectBtn.AbsolutePosition.X - Window.AbsolutePosition.X,
+                        0,
+                        (selectBtn.AbsolutePosition.Y - Window.AbsolutePosition.Y) + selectBtn.AbsoluteSize.Y + 2
+                    )
                     listFrame.Visible = true
-                    local h = math.min(#options * 32 + 8, 220)
-                    Tween(listFrame, { Size = UDim2.new(1, -28, 0, h) }, 0.2)
-                    Tween(arrow, { Rotation = 180 }, 0.2)
                 else
-                    Tween(listFrame, { Size = UDim2.new(1, -28, 0, 0) }, 0.2)
-                    Tween(arrow, { Rotation = 0 }, 0.2)
-                    task.wait(0.2)
                     listFrame.Visible = false
                 end
             end
@@ -2220,7 +2159,7 @@ function SV:CreateWindow(options)
                     TextSize = 12,
                     Font = Enum.Font.Gotham,
                     AutoButtonColor = false,
-                    ZIndex = 21,
+                    ZIndex = 30001,
                 })
                 Create("UICorner", { Parent = ob, CornerRadius = UDim.new(0, 5) })
 
@@ -2261,26 +2200,6 @@ function SV:CreateWindow(options)
                 end,
                 GetValue = function()
                     return multiple and selected or current
-                end,
-                Refresh = function(newOptions)
-                    for _, ob in ipairs(optionButtons) do ob:Destroy() end
-                    optionButtons = {}
-                    options = newOptions
-                    for _, opt in ipairs(newOptions) do
-                        local ob = Create("TextButton", {
-                            Parent = listFrame,
-                            Size = UDim2.new(1, 0, 0, 30),
-                            BackgroundColor3 = Colors.DropdownHover,
-                            BorderSizePixel = 0,
-                            Text = opt,
-                            TextColor3 = Colors.Text,
-                            TextSize = 12,
-                            Font = Enum.Font.Gotham,
-                            AutoButtonColor = false,
-                            ZIndex = 21,
-                        })
-                        Create("UICorner", { Parent = ob, CornerRadius = UDim.new(0, 5) })
-                    end
                 end,
             }
         end
@@ -2401,14 +2320,6 @@ function SV:CreateWindow(options)
                         recording = false
                         if inputConn then inputConn:Disconnect() end
                         if opts.Callback then Safe(opts.Callback, input.KeyCode) end
-                    elseif input.UserInputType == Enum.UserInputType.MouseButton1
-                        or input.UserInputType == Enum.UserInputType.MouseButton2 then
-                        currentKey = input.UserInputType.Name:gsub("MouseButton", "Mouse")
-                        keyBtn.Text = currentKey
-                        keyBtn.BackgroundColor3 = Colors.Input
-                        recording = false
-                        if inputConn then inputConn:Disconnect() end
-                        if opts.Callback then Safe(opts.Callback, input.UserInputType) end
                     end
                 end)
             end)
@@ -2459,7 +2370,6 @@ function SV:CreateWindow(options)
 
             local channels = { "R", "G", "B" }
             local startY = 38
-            local sliders = {}
 
             for i = 1, 3 do
                 Create("TextLabel", {
@@ -2501,9 +2411,8 @@ function SV:CreateWindow(options)
                 })
                 Create("UICorner", { Parent = knob, CornerRadius = UDim.new(1, 0) })
 
-                sliders[i] = { track = track, fill = fill, knob = knob }
-
                 local dragging = false
+
                 local function update(input)
                     local relX = math.clamp(
                         (input.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X,
@@ -2729,95 +2638,6 @@ function SV:CreateWindow(options)
             return c
         end
 
-        function Tab:CreateTabs(opts)
-            opts = opts or {}
-            local subTabs = opts.Tabs or {}
-            local activeSub = nil
-
-            local bar = Create("Frame", {
-                Parent = Content,
-                Size = UDim2.new(1, 0, 0, 34),
-                BackgroundColor3 = Colors.Element,
-                BorderSizePixel = 0,
-                LayoutOrder = NextOrder(),
-            })
-            Create("UICorner", { Parent = bar, CornerRadius = UDim.new(0, 8) })
-            Create("UIListLayout", {
-                Parent = bar,
-                FillDirection = Enum.FillDirection.Horizontal,
-                Padding = UDim.new(0, 4),
-                VerticalAlignment = Enum.VerticalAlignment.Center,
-            })
-            Create("UIPadding", {
-                Parent = bar,
-                PaddingLeft = UDim.new(0, 4),
-                PaddingRight = UDim.new(0, 4),
-            })
-
-            local pages = {}
-            local btns = {}
-
-            local function switchSub(id)
-                if activeSub == id then return end
-                for _, p in pairs(pages) do p.Visible = false end
-                if pages[id] then pages[id].Visible = true end
-                for tid, b in pairs(btns) do
-                    if tid == id then
-                        Tween(b, { BackgroundColor3 = Colors.Accent }, 0.15)
-                        b.TextColor3 = Color3.fromRGB(255, 255, 255)
-                    else
-                        Tween(b, { BackgroundColor3 = Colors.ElementHover }, 0.15)
-                        b.TextColor3 = Colors.TextMuted
-                    end
-                end
-                activeSub = id
-            end
-
-            for _, sub in ipairs(subTabs) do
-                local b = Create("TextButton", {
-                    Parent = bar,
-                    Size = UDim2.new(0, 100, 0, 26),
-                    BackgroundColor3 = Colors.ElementHover,
-                    BorderSizePixel = 0,
-                    Text = sub.Name or "Tab",
-                    TextColor3 = Colors.TextMuted,
-                    TextSize = 12,
-                    Font = Enum.Font.GothamBold,
-                    AutoButtonColor = false,
-                })
-                Create("UICorner", { Parent = b, CornerRadius = UDim.new(0, 6) })
-
-                local p = Create("Frame", {
-                    Parent = Content,
-                    Size = UDim2.new(1, 0, 0, 0),
-                    Position = UDim2.new(0, 0, 0, 0),
-                    BackgroundTransparency = 1,
-                    Visible = false,
-                    LayoutOrder = NextOrder(),
-                })
-                Create("UIListLayout", {
-                    Parent = p,
-                    Padding = UDim.new(0, 10),
-                    SortOrder = Enum.SortOrder.LayoutOrder,
-                })
-
-                pages[sub.Name] = p
-                btns[sub.Name] = b
-
-                b.MouseButton1Click:Connect(function() switchSub(sub.Name) end)
-            end
-
-            if #subTabs > 0 then switchSub(subTabs[1].Name) end
-
-            return pages, switchSub
-        end
-
-        -- Search filter support
-        tabOptions.matchesSearch = function()
-            if searchQuery == "" then return true end
-            return name:lower():find(searchQuery:lower(), 1, true) ~= nil
-        end
-
         return Tab
     end
 
@@ -2913,7 +2733,7 @@ function SV:CreateWindow(options)
     end)
 
     -- ==========================================
-    -- RETURN WINDOW API
+    -- WINDOW API
     -- ==========================================
     local WindowAPI = {}
 
@@ -2990,16 +2810,17 @@ function SV:CreateWindow(options)
     function WindowAPI:GetConfig() return ConfigData end
     function WindowAPI:SetConfig(key, value) ConfigData[key] = value end
     function WindowAPI:GetConfigValue(key) return ConfigData[key] end
-
     function WindowAPI:IsMinimized() return isMinimized end
+    function WindowAPI:GetScreenGui() return ScreenGui end
 
-    -- Initial notification
+    -- Welcome notification
     task.delay(1.6, function()
         Notify:Push({
             Title = "ScriptVault Loaded",
-            Content = "UI Library v" .. SV._VERSION .. " · Right Shift to toggle",
+            Content = "UI Library v" .. SV._VERSION .. " - Right Shift to toggle",
             Type = "Success",
             Duration = 5,
+            Icon = SV.Icons.Logo,
         })
     end)
 
@@ -3011,19 +2832,35 @@ end
 -- =====================================================
 function SV:GetVersion() return SV._VERSION end
 function SV:GetBuild() return SV._BUILD end
+
 function SV:GetThemes()
     local list = {}
     for k in pairs(Themes) do table.insert(list, k) end
     table.sort(list)
     return list
 end
+
 function SV:GetIcons()
     local list = {}
-    for k, v in pairs(SV.Icons) do table.insert(list, { Name = k, Id = v }) end
+    for k, v in pairs(SV.Icons) do
+        table.insert(list, { Name = k, Id = v })
+    end
     return list
 end
-function SV:SetIcon(key, id) SV.Icons[key] = id end
-function SV:RegisterTheme(name, colors) Themes[name] = colors end
+
+function SV:SetIcon(key, id)
+    SV.Icons[key] = id
+end
+
+function SV:RegisterTheme(name, colors)
+    Themes[name] = colors
+end
+
+function SV:FormatNumber(n) return FormatNumber(n) end
+function SV:FormatTime(s) return FormatTime(s) end
+function SV:GetPing() return GetPing() end
+function SV:GetMemory() return GetMemory() end
+function SV:IsTouchDevice() return IsTouchDevice() end
 
 -- =====================================================
 -- RETURN LIBRARY
