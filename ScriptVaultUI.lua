@@ -14,8 +14,8 @@
 
 local SV = {}
 SV.__index = SV
-SV._VERSION = "5.0.0"
-SV._BUILD = "20261001"
+SV._VERSION = "5.1.0"
+SV._BUILD = "20261002"
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -502,7 +502,7 @@ function SV:CreateWindow(options)
     local startTime=tick()
     connect(RunService.RenderStepped,function()
         local elapsed=tick()-startTime
-        local fps=math.floor(1/math.max(RunService.RenderStepped:Wait(),1/240))
+        local fps=0
     end)
     task.spawn(function()
         local frames=0;local last=tick()
@@ -523,8 +523,42 @@ function SV:CreateWindow(options)
         end
     end)
 
+    -- AutoFarm-focused UX layer
+    local farmTab=makeTab("AutoFarm",SV.Icons.Farm,{Order=1})
+    farmTab:CreateSection("Control Center")
+    local farmEnabled=false
+    local farmMode="Balanced"
+    local target="Nearest"
+    local farmStatus=farmTab:CreateParagraph({Title="AutoFarm Status",Content="Ready • Configure the options below and connect your callbacks.",Icon=SV.Icons.Farm})
+    farmTab:CreateToggle({Name="Enable AutoFarm",Description="Master switch for the automation layer.",Callback=function(v) farmEnabled=v; farmStatus= farmStatus end})
+    farmTab:CreateDropdown({Name="Farm Mode",Options={"Balanced","Fast","Safe","Custom"},CurrentOption="Balanced",Callback=function(v) farmMode=v end})
+    farmTab:CreateDropdown({Name="Target Selection",Options={"Nearest","Lowest HP","Highest Value","Selected Zone"},CurrentOption="Nearest",Callback=function(v) target=v end})
+    farmTab:CreateSlider({Name="Action Delay",Range={0,5000},CurrentValue=500,Increment=50,Suffix=" ms"})
+    farmTab:CreateSection("Automation")
+    farmTab:CreateToggle({Name="Auto Collect",Description="Enable automatic collection when your script provides the action callback."})
+    farmTab:CreateToggle({Name="Auto Sell",Description="Enable automatic selling through your connected farm logic."})
+    farmTab:CreateToggle({Name="Auto Reconnect",Description="Expose a reconnect state for your own connection handler."})
+    farmTab:CreateToggle({Name="Anti-AFK",Description="UI control only; connect the callback to your own implementation."})
+    farmTab:CreateSection("Session")
+    farmTab:CreateButton({Name="Start / Stop Session",Variant="Primary",Callback=function() farmEnabled=not farmEnabled end})
+    farmTab:CreateButton({Name="Emergency Stop",Variant="Error",Callback=function() farmEnabled=false end})
+    farmTab:CreateParagraph({Title="Integration API",Content="Use the returned control objects and callbacks to connect this interface to your existing AutoFarm logic. The UI itself does not assume a specific game mechanic."})
+
+    local monitorTab=makeTab("Monitor",SV.Icons.Stats,{Order=2})
+    monitorTab:CreateSection("Live Metrics")
+    monitorTab:CreateParagraph({Title="Runtime Monitor",Content="Use Dashboard for FPS, ping, memory and session time. Add game-specific counters here through your own callbacks."})
+    monitorTab:CreateSlider({Name="Update Interval",Range={100,5000},CurrentValue=1000,Increment=100,Suffix=" ms"})
+
+    local settingsTab=makeTab("Settings",SV.Icons.Settings,{Order=99})
+    settingsTab:CreateSection("Interface")
+    settingsTab:CreateToggle({Name="Reduced Motion",Description="Prefer minimal UI animation for lower visual overhead."})
+    settingsTab:CreateToggle({Name="Compact Sidebar",Description="Keep navigation condensed for smaller screens."})
+    settingsTab:CreateKeybind({Name="Toggle Window",CurrentKeybind=ToggleKeybind})
+    settingsTab:CreateSection("Safety")
+    settingsTab:CreateButton({Name="Emergency UI Hide",Variant="Warning",Callback=function() setMin(true) end})
+
     -- Public window API
-    local api={}
+    local api={}\n    api.Farm={GetEnabled=function() return farmEnabled end,GetMode=function() return farmMode end,GetTarget=function() return target end,Stop=function() farmEnabled=false end}
     api.Instance=Window
     api.ScreenGui=ScreenGui
     api.Tabs=tabs
