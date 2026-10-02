@@ -14,7 +14,7 @@
 
 local SV = {}
 SV.__index = SV
-SV._VERSION = "6.0.0"
+SV._VERSION = "6.1.0"
 SV._BUILD = "20261002"
 
 local Players = game:GetService("Players")
@@ -54,7 +54,7 @@ local function palette(bg, panel, card, hover, accent, text, muted)
     }
 end
 
-theme("DarkBlue", palette(Color3.fromRGB(11,13,21),Color3.fromRGB(17,20,31),Color3.fromRGB(25,29,43),Color3.fromRGB(34,39,57),Color3.fromRGB(55,130,255),Color3.fromRGB(242,245,255),Color3.fromRGB(157,165,190)))
+theme("Blue", palette(Color3.fromRGB(5,10,24),Color3.fromRGB(8,17,39),Color3.fromRGB(13,27,57),Color3.fromRGB(20,42,82),Color3.fromRGB(38,145,255),Color3.fromRGB(240,248,255),Color3.fromRGB(139,174,220)))
 theme("Midnight", palette(Color3.fromRGB(9,9,14),Color3.fromRGB(14,14,21),Color3.fromRGB(22,22,32),Color3.fromRGB(32,31,46),Color3.fromRGB(177,103,255),Color3.fromRGB(246,241,255),Color3.fromRGB(163,154,185)))
 theme("Ocean", palette(Color3.fromRGB(8,17,24),Color3.fromRGB(13,25,34),Color3.fromRGB(21,37,50),Color3.fromRGB(31,52,68),Color3.fromRGB(0,205,225),Color3.fromRGB(235,251,255),Color3.fromRGB(151,179,195)))
 theme("Light", palette(Color3.fromRGB(244,246,250),Color3.fromRGB(235,239,245),Color3.fromRGB(255,255,255),Color3.fromRGB(245,248,252),Color3.fromRGB(30,120,230),Color3.fromRGB(28,31,42),Color3.fromRGB(101,107,126)))
@@ -131,7 +131,7 @@ end
 
 function SV:CreateWindow(options)
     options=options or {}
-    local Colors=Themes[options.Theme or "DarkBlue"] or Themes.DarkBlue
+    local Colors=Themes.Blue
     local WindowName=options.Name or "ScriptVault"
     local Width=options.Width or 900
     local Height=options.Height or 570
@@ -170,20 +170,32 @@ function SV:CreateWindow(options)
     local Shadow=create("Frame",{Size=UDim2.fromOffset(Width+28,Height+28),Position=UDim2.new(.5,-Width/2-14,.5,-Height/2-4),BackgroundColor3=Color3.new(0,0,0),BackgroundTransparency=.65,BorderSizePixel=0},ScreenGui)
     corner(22,Shadow)
 
-    local Window=create("Frame",{Size=UDim2.fromOffset(Width,Height),Position=UDim2.new(.5,-Width/2,.5,-Height/2),BackgroundColor3=Colors.Background,BorderSizePixel=0,ClipsDescendants=true},ScreenGui)
+    local accentGlow=create("Frame",{Size=UDim2.fromOffset(Width+12,Height+12),Position=UDim2.new(.5,-Width/2-6,.5,-Height/2-6),BackgroundColor3=Colors.Accent,BackgroundTransparency=.92,BorderSizePixel=0,ZIndex=0},ScreenGui)\n    corner(22,accentGlow)\n        local Window=create("Frame",{Size=UDim2.fromOffset(Width,Height),Position=UDim2.new(.5,-Width/2,.5,-Height/2),BackgroundColor3=Colors.Background,BorderSizePixel=0,ClipsDescendants=true,ZIndex=2},ScreenGui)
     corner(18,Window)
     local outerStroke=stroke(Colors.Border,1,0.72,Window)
 
-    local Top=create("Frame",{Size=UDim2.new(1,0,0,58),BackgroundColor3=Colors.TopBar,BorderSizePixel=0},Window)
-    local topLine=create("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,1,-1),BackgroundColor3=Colors.Separator,BorderSizePixel=0},Top)
+    local Top=create("Frame",{Size=UDim2.new(1,0,0,58),BackgroundColor3=Colors.TopBar,BorderSizePixel=0,ZIndex=3},Window)
+    local topLine=create("Frame",{Size=UDim2.new(1,0,0,2),Position=UDim2.new(0,0,1,-2),BackgroundColor3=Colors.Accent,BorderSizePixel=0},Top)
 
     local logoWrap=create("Frame",{Size=UDim2.fromOffset(36,36),Position=UDim2.fromOffset(12,11),BackgroundColor3=Colors.Accent,BorderSizePixel=0},Top)
     corner(11,logoWrap)
-    local logo=icon(options.Icon or SV.Icons.Logo,UDim2.fromScale(.68,.68),Color3.new(1,1,1),logoWrap)
+    local logo=icon("rbxassetid://93348253170824",UDim2.fromScale(.68,.68),Color3.new(1,1,1),logoWrap)
     if logo then logo.AnchorPoint=Vector2.new(.5,.5);logo.Position=UDim2.fromScale(.5,.5) end
 
     create("TextLabel",{Size=UDim2.new(0,260,0,22),Position=UDim2.fromOffset(58,8),BackgroundTransparency=1,Text=WindowName,TextColor3=Colors.Text,TextSize=15,Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left},Top)
     create("TextLabel",{Size=UDim2.new(0,260,0,16),Position=UDim2.fromOffset(58,30),BackgroundTransparency=1,Text="ScriptVault • v"..SV._VERSION,TextColor3=Colors.TextMuted,TextSize=10,Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left},Top)
+
+    local shimmer=create("Frame",{Size=UDim2.new(0,120,1,0),Position=UDim2.new(0,-140,0,0),BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=.92,BorderSizePixel=0,ZIndex=4},Top)
+    local shimmerGradient=create("UIGradient",{Rotation=15,Color=ColorSequence.new(Color3.new(1,1,1),Color3.new(1,1,1)),Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,1),NumberSequenceKeypoint.new(.5,.1),NumberSequenceKeypoint.new(1,1)})},shimmer)
+    task.spawn(function()
+        while ScreenGui.Parent do
+            if not reducedMotion then
+                shimmer.Position=UDim2.new(0,-140,0,0)
+                tween(shimmer,{Position=UDim2.new(1,40,0,0)},1.25,Enum.EasingStyle.Quad)
+                task.wait(3.8)
+            else task.wait(.5) end
+        end
+    end)
 
     local search=create("TextBox",{Size=UDim2.fromOffset(210,34),Position=UDim2.new(1,-318,.5,-17),BackgroundColor3=Colors.Input,BorderSizePixel=0,PlaceholderText="Search tabs  •  Ctrl+K",PlaceholderColor3=Colors.TextDark,Text="",TextColor3=Colors.Text,TextSize=11,Font=Enum.Font.Gotham,ClearTextOnFocus=false},Top)
     corner(10,search)
@@ -514,6 +526,19 @@ function SV:CreateWindow(options)
         ScreenGui:Destroy()
     end)
 
+    task.spawn(function()
+        local t=0
+        while ScreenGui.Parent do
+            t+=task.wait(.035)
+            if not reducedMotion then
+                local a=(math.sin(t*2.2)+1)/2
+                glowStroke.Transparency=.78+a*.16
+                accentGlow.BackgroundTransparency=.94-a*.035
+                topLine.BackgroundTransparency=.12+a*.35
+            end
+        end
+    end)
+
     -- Dragging
     local dragging=false;local dragStart;local startPos
     connect(Top.InputBegan,function(input)
@@ -627,8 +652,7 @@ function SV:CreateWindow(options)
     api.ThemeName=options.Theme or "DarkBlue"
     api.Version=SV._VERSION
     api.Build=SV._BUILD
-    api.OnThemeChanged=function(fn) if type(fn)=="function" then table.insert(themeListeners,fn) end return fn end
-    api.GetTheme=function() return api.ThemeName,Colors end
+    api.GetTheme=function() return "Blue",Colors end
     api.GetTabs=function() return tabs end
     api.GetCurrentTab=function() return current end
     api.Farm={GetEnabled=function() return farmEnabled end,GetMode=function() return farmMode end,GetTarget=function() return target end,Stop=function() farmEnabled=false end}
