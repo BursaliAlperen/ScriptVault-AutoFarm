@@ -55,12 +55,6 @@ local function palette(bg, panel, card, hover, accent, text, muted)
 end
 
 theme("Blue", palette(Color3.fromRGB(5,10,24),Color3.fromRGB(8,17,39),Color3.fromRGB(13,27,57),Color3.fromRGB(20,42,82),Color3.fromRGB(38,145,255),Color3.fromRGB(240,248,255),Color3.fromRGB(139,174,220)))
-theme("Midnight", palette(Color3.fromRGB(9,9,14),Color3.fromRGB(14,14,21),Color3.fromRGB(22,22,32),Color3.fromRGB(32,31,46),Color3.fromRGB(177,103,255),Color3.fromRGB(246,241,255),Color3.fromRGB(163,154,185)))
-theme("Ocean", palette(Color3.fromRGB(8,17,24),Color3.fromRGB(13,25,34),Color3.fromRGB(21,37,50),Color3.fromRGB(31,52,68),Color3.fromRGB(0,205,225),Color3.fromRGB(235,251,255),Color3.fromRGB(151,179,195)))
-theme("Light", palette(Color3.fromRGB(244,246,250),Color3.fromRGB(235,239,245),Color3.fromRGB(255,255,255),Color3.fromRGB(245,248,252),Color3.fromRGB(30,120,230),Color3.fromRGB(28,31,42),Color3.fromRGB(101,107,126)))
-theme("Monochrome", palette(Color3.fromRGB(17,17,17),Color3.fromRGB(23,23,23),Color3.fromRGB(31,31,31),Color3.fromRGB(43,43,43),Color3.fromRGB(235,235,235),Color3.fromRGB(245,245,245),Color3.fromRGB(158,158,158)))
-theme("Sunset", palette(Color3.fromRGB(24,14,20),Color3.fromRGB(32,19,28),Color3.fromRGB(43,25,38),Color3.fromRGB(57,34,49),Color3.fromRGB(255,104,130),Color3.fromRGB(255,241,245),Color3.fromRGB(202,166,178)))
-theme("Forest", palette(Color3.fromRGB(11,21,15),Color3.fromRGB(17,29,21),Color3.fromRGB(26,42,31),Color3.fromRGB(38,57,43),Color3.fromRGB(77,218,119),Color3.fromRGB(232,251,237),Color3.fromRGB(151,181,160)))
 
 local function safe(fn,...)
     if type(fn) ~= "function" then return end
@@ -667,20 +661,6 @@ function SV:CreateWindow(options)
     api.Destroy=function()if ScreenGui.Parent then disconnectAll();ScreenGui:Destroy()end end
     api.SelectTab=function(name)for _,t in ipairs(tabs)do if t.Name==name then activate(t);return t end end end
     api.OpenCommandPalette=function()overlay.Visible=true;rebuildResults("");paletteSearch:CaptureFocus()end
-    api.SetTheme=function(name)
-        if not Themes[name] then return false end
-        api.ThemeName=name
-        applyWindowTheme(Themes[name])
-        return true
-    end
-    api.RegisterTheme=function(name,values)
-        if type(name)~="string" or type(values)~="table" then return false end
-        Themes[name]=values
-        return true
-    end
-    api.ListThemes=function()
-        local list={}; for name in pairs(Themes) do table.insert(list,name) end; table.sort(list); return list
-    end
     api.SetReducedMotion=function(v) reducedMotion=v==true end
     api.IsReducedMotion=function() return reducedMotion end
     api.SetPosition=function(x,y) Window.Position=UDim2.fromOffset(tonumber(x) or 0,tonumber(y) or 0); return api end
