@@ -530,7 +530,7 @@ function SV:CreateWindow(options)
     local farmMode="Balanced"
     local target="Nearest"
     local farmStatus=farmTab:CreateParagraph({Title="AutoFarm Status",Content="Ready • Configure the options below and connect your callbacks.",Icon=SV.Icons.Farm})
-    farmTab:CreateToggle({Name="Enable AutoFarm",Description="Master switch for the automation layer.",Callback=function(v) farmEnabled=v; farmStatus= farmStatus end})
+    farmTab:CreateToggle({Name="Enable AutoFarm",Description="Master switch for the automation layer.",Callback=function(v) farmEnabled=v end})
     farmTab:CreateDropdown({Name="Farm Mode",Options={"Balanced","Fast","Safe","Custom"},CurrentOption="Balanced",Callback=function(v) farmMode=v end})
     farmTab:CreateDropdown({Name="Target Selection",Options={"Nearest","Lowest HP","Highest Value","Selected Zone"},CurrentOption="Nearest",Callback=function(v) target=v end})
     farmTab:CreateSlider({Name="Action Delay",Range={0,5000},CurrentValue=500,Increment=50,Suffix=" ms"})
@@ -558,7 +558,8 @@ function SV:CreateWindow(options)
     settingsTab:CreateButton({Name="Emergency UI Hide",Variant="Warning",Callback=function() setMin(true) end})
 
     -- Public window API
-    local api={}\n    api.Farm={GetEnabled=function() return farmEnabled end,GetMode=function() return farmMode end,GetTarget=function() return target end,Stop=function() farmEnabled=false end}
+    local api={}
+    api.Farm={GetEnabled=function() return farmEnabled end,GetMode=function() return farmMode end,GetTarget=function() return target end,Stop=function() farmEnabled=false end}
     api.Instance=Window
     api.ScreenGui=ScreenGui
     api.Tabs=tabs
