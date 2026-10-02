@@ -14,7 +14,7 @@
 
 local SV = {}
 SV.__index = SV
-SV._VERSION = "5.1.0"
+SV._VERSION = "6.0.0"
 SV._BUILD = "20261002"
 
 local Players = game:GetService("Players")
@@ -140,6 +140,20 @@ function SV:CreateWindow(options)
     local SidebarWidth=options.SidebarWidth or 190
     local ToggleKeybind=options.ToggleKeybind or Enum.KeyCode.RightShift
     local reducedMotion=options.ReducedMotion or false
+    local componentRegistry={}
+    local themeListeners={}
+    local function applyWindowTheme(nextColors)
+        Colors=nextColors
+        for _,entry in ipairs(componentRegistry) do
+            if entry.Object and entry.Object.Parent then
+                for prop,token in pairs(entry.Props) do
+                    local value=nextColors[token]
+                    if value then pcall(function() entry.Object[prop]=value end) end
+                end
+            end
+        end
+        for _,fn in ipairs(themeListeners) do safe(fn,nextColors) end
+    end
 
     local connections={}
     local function connect(signal, fn)
@@ -388,6 +402,57 @@ function SV:CreateWindow(options)
             return {Container=f,GetValue=function()return key end,SetValue=function(v)key=v;b.Text=v.Name end}
         end
 
+        function tab:CreateCard(o)
+            o=o or {}; self._order+=1
+            local f=create("Frame",{Size=UDim2.new(1,0,0,o.Height or 92),BackgroundColor3=Colors.Element,BorderSizePixel=0,LayoutOrder=self._order},self.Content)
+            corner(o.Radius or 12,f); stroke(Colors.Separator,1,.25,f)
+            if o.Title then create("TextLabel",{Size=UDim2.new(1,-24,0,22),Position=UDim2.fromOffset(12,10),BackgroundTransparency=1,Text=tostring(o.Title),TextColor3=Colors.Text,TextSize=13,Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left},f) end
+            if o.Content then create("TextLabel",{Size=UDim2.new(1,-24,1,-38),Position=UDim2.fromOffset(12,32),BackgroundTransparency=1,Text=tostring(o.Content),TextColor3=Colors.TextMuted,TextSize=11,Font=Enum.Font.Gotham,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top},f) end
+            return f
+        end
+
+        function tab:CreateProgressBar(o)
+            o=o or {}; self._order+=1
+            local f=create("Frame",{Size=UDim2.new(1,0,0,58),BackgroundColor3=Colors.Element,BorderSizePixel=0,LayoutOrder=self._order},self.Content);corner(10,f)
+            create("TextLabel",{Size=UDim2.new(1,-80,0,18),Position=UDim2.fromOffset(12,8),BackgroundTransparency=1,Text=o.Name or "Progress",TextColor3=Colors.Text,TextSize=11,Font=Enum.Font.GothamMedium,TextXAlignment=Enum.TextXAlignment.Left},f)
+            local valueLabel=create("TextLabel",{Size=UDim2.fromOffset(58,18),Position=UDim2.new(1,-70,0,8),BackgroundTransparency=1,Text="0%",TextColor3=Colors.Accent,TextSize=10,Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Right},f)
+            local track=create("Frame",{Size=UDim2.new(1,-24,0,8),Position=UDim2.fromOffset(12,38),BackgroundColor3=Colors.Slider,BorderSizePixel=0},f);corner(4,track)
+            local fill=create("Frame",{Size=UDim2.new(0,0,1,0),BackgroundColor3=Colors.SliderFill,BorderSizePixel=0},track);corner(4,fill)
+            local value=0
+            local function set(v)
+                value=math.clamp(tonumber(v) or 0,0,100)
+                fill.Size=UDim2.new(value/100,0,1,0); valueLabel.Text=string.format("%d%%",value); safe(o.Callback,value)
+            end
+            set(o.CurrentValue or 0)
+            return {Container=f,SetValue=set,GetValue=function()return value end}
+        end
+
+        function tab:CreateColorPicker(o)
+            o=o or {}; self._order+=1
+            local f=create("Frame",{Size=UDim2.new(1,0,0,50),BackgroundColor3=Colors.Element,BorderSizePixel=0,LayoutOrder=self._order},self.Content);corner(10,f)
+            create("TextLabel",{Size=UDim2.new(1,-80,1,0),Position=UDim2.fromOffset(13,0),BackgroundTransparency=1,Text=o.Name or "Color",TextColor3=Colors.Text,TextSize=12,Font=Enum.Font.GothamMedium,TextXAlignment=Enum.TextXAlignment.Left},f)
+            local value=o.CurrentColor or Colors.Accent
+            local swatch=create("TextButton",{Size=UDim2.fromOffset(42,28),Position=UDim2.new(1,-54,.5,-14),BackgroundColor3=value,BorderSizePixel=0,Text="",AutoButtonColor=false},f);corner(8,swatch)
+            local popup=create("Frame",{Size=UDim2.fromOffset(210,42),Position=UDim2.new(1,-222,1,5),BackgroundColor3=Colors.Input,BorderSizePixel=0,Visible=false,ZIndex=5000},f);corner(9,popup);stroke(Colors.Border,1,.35,popup)
+            create("UIGridLayout",{CellSize=UDim2.fromOffset(28,28),CellPadding=UDim2.fromOffset(5,5)},popup)
+            for _,colorValue in ipairs(o.Colors or {Colors.Accent,Colors.Success,Colors.Warning,Colors.Error,Color3.fromRGB(255,255,255),Color3.fromRGB(120,120,120)}) do
+                local b=create("TextButton",{BackgroundColor3=colorValue,BorderSizePixel=0,Text="",AutoButtonColor=false,ZIndex=5001},popup);corner(7,b)
+                connect(b.MouseButton1Click,function() value=colorValue;swatch.BackgroundColor3=value;popup.Visible=false;safe(o.Callback,value) end)
+            end
+            connect(swatch.MouseButton1Click,function()popup.Visible=not popup.Visible end)
+            return {Container=f,SetValue=function(v)if typeof(v)=="Color3" then value=v;swatch.BackgroundColor3=v end end,GetValue=function()return value end}
+        end
+
+        function tab:CreateBadge(textValue, colorValue)
+            self._order+=1
+            local b=create("TextLabel",{Size=UDim2.fromOffset(70,24),BackgroundColor3=colorValue or Colors.Accent,BorderSizePixel=0,Text=tostring(textValue),TextColor3=Color3.new(1,1,1),TextSize=10,Font=Enum.Font.GothamBold,LayoutOrder=self._order},self.Content);corner(12,b)
+            return b
+        end
+
+        function tab:SetVisible(value) self.Content.Visible=value~=false; return self end
+        function tab:Select() activate(self); return self end
+        function tab:SetBadge(value) self.Badge=value; return self end
+
         return tab
     end
 
@@ -559,6 +624,13 @@ function SV:CreateWindow(options)
 
     -- Public window API
     local api={}
+    api.ThemeName=options.Theme or "DarkBlue"
+    api.Version=SV._VERSION
+    api.Build=SV._BUILD
+    api.OnThemeChanged=function(fn) if type(fn)=="function" then table.insert(themeListeners,fn) end return fn end
+    api.GetTheme=function() return api.ThemeName,Colors end
+    api.GetTabs=function() return tabs end
+    api.GetCurrentTab=function() return current end
     api.Farm={GetEnabled=function() return farmEnabled end,GetMode=function() return farmMode end,GetTarget=function() return target end,Stop=function() farmEnabled=false end}
     api.Instance=Window
     api.ScreenGui=ScreenGui
@@ -573,12 +645,24 @@ function SV:CreateWindow(options)
     api.OpenCommandPalette=function()overlay.Visible=true;rebuildResults("");paletteSearch:CaptureFocus()end
     api.SetTheme=function(name)
         if not Themes[name] then return false end
-        -- Theme hot-swap is exposed for future component instances; current controls retain their created palette.
         api.ThemeName=name
+        applyWindowTheme(Themes[name])
         return true
     end
+    api.RegisterTheme=function(name,values)
+        if type(name)~="string" or type(values)~="table" then return false end
+        Themes[name]=values
+        return true
+    end
+    api.ListThemes=function()
+        local list={}; for name in pairs(Themes) do table.insert(list,name) end; table.sort(list); return list
+    end
+    api.SetReducedMotion=function(v) reducedMotion=v==true end
+    api.IsReducedMotion=function() return reducedMotion end
+    api.SetPosition=function(x,y) Window.Position=UDim2.fromOffset(tonumber(x) or 0,tonumber(y) or 0); return api end
+    api.SetSize=function(w,h) Window.Size=UDim2.fromOffset(math.max(MinWidth,tonumber(w) or Width),math.max(MinHeight,tonumber(h) or Height)); return api end
     function api:CreateTab(name,iconId,opts) return makeTab(name,iconId,opts) end
-    api.CreateTab=api.CreateTab
+    api.ClearNotifications=function() local h=ScreenGui:FindFirstChild("Notifications");if h then for _,n in ipairs(h:GetChildren())do if n:IsA("Frame") then n:Destroy() end end end end
     api.Notify=function(o)
         o=o or {}
         local holder=ScreenGui:FindFirstChild("Notifications") or create("Frame",{Name="Notifications",Size=UDim2.fromOffset(330,1),Position=UDim2.new(1,-346,0,20),BackgroundTransparency=1,AutomaticSize=Enum.AutomaticSize.Y,ZIndex=7000},ScreenGui)
